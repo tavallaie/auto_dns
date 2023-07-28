@@ -2,9 +2,9 @@ import os
 import yaml
 import requests
 import typer
-from dns_providers.arvan import Arvan
-from dns_providers.cloudflare import Cloudflare
-from exceptions import UnsupportedProviderError
+from auto_ddns.dns_providers.arvan import Arvan
+from auto_ddns.dns_providers.cloudflare import Cloudflare
+from auto_ddns.exceptions import UnsupportedProviderError
 
 
 class DNSRecord:
