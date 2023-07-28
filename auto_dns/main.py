@@ -30,25 +30,53 @@ class DDNS:
 
             table = []
             for item in records:
-                # Make sure 'value' key exists and it is a list
-                if "value" in item and isinstance(item["value"], list):
-                    for value in item["value"]:
-                        # Check if 'ip' key exists in the dictionary
-                        if "ip" in value:
+                # Make sure 'value' key exists
+                if "value" in item:
+                    if isinstance(item["value"], list):
+                        # Handle case where 'value' is a list of dictionaries
+                        for value in item["value"]:
                             table.append(
                                 [
                                     item.get("type", "N/A"),
                                     item.get("name", "N/A"),
-                                    value["ip"],
+                                    value.get(
+                                        "ip", "N/A"
+                                    ),  # always get IP if it is available
                                     item.get("ttl", "N/A"),
                                     item.get("is_protected", "N/A"),
                                 ]
                             )
+                    elif isinstance(item["value"], dict):
+                        # Handle case where 'value' is a dictionary
+                        table.append(
+                            [
+                                item.get("type", "N/A"),
+                                item.get("name", "N/A"),
+                                item["value"].get(
+                                    "host", "N/A"
+                                ),  # get host if it is available
+                                item.get("ttl", "N/A"),
+                                item.get("is_protected", "N/A"),
+                            ]
+                        )
+                    elif isinstance(item["value"], str):
+                        # Handle case where 'value' is a string (possible in case of TXT type)
+                        table.append(
+                            [
+                                item.get("type", "N/A"),
+                                item.get("name", "N/A"),
+                                item[
+                                    "value"
+                                ],  # directly take the value if it's a string
+                                item.get("ttl", "N/A"),
+                                item.get("is_protected", "N/A"),
+                            ]
+                        )
 
             print(
                 tabulate(
                     table,
-                    headers=["Type", "Name", "IP", "TTL", "Is Protected"],
+                    headers=["Type", "Name", "Value", "TTL", "Is Protected"],
                     tablefmt="pretty",
                 )
             )

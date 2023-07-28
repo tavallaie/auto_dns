@@ -7,7 +7,7 @@ Auto DNS is a Python command line application which automatically updates the DN
 Supported DNS providers:
 
 - Arvan
-- Cloudflare
+- Cloudflare [coming soon]
 
 This library is intended to be used on a system with a dynamic public IP that you want to map to a static domain name.
 
@@ -38,11 +38,29 @@ To configure a DNS provider API key, use the following command:
 Usage
 =====
 
+To create a DNS record:
+
+.. code-block:: shell
+
+   $ autodns create <domain> <record_type> <name> <provider> --ip <ip_address>
+
 To update a DNS record with your current public IP, use the following command:
 
 .. code-block:: shell
 
-   $ autodns update <domain> <record_type> <provider>
+   $ autodns update <domain> <record_type> <name> <provider> --ip <ip_address>
+
+To delete a DNS record:
+
+.. code-block:: shell
+
+   $ autodns delete <domain> <record_type> <name> <provider>
+
+To get DNS records:
+
+.. code-block:: shell
+
+   $ autodns get_record <domain> <provider> --record-type <record_type> --name <name>
 
 Contributing
 ============

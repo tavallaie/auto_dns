@@ -15,7 +15,6 @@ class Arvan:
         )
         response.raise_for_status()
         data = response.json()
-
         # if record_type is provided, filter by type
         if record_type:
             print(f"Searching for records of type: {record_type}")
@@ -35,7 +34,7 @@ class Arvan:
 
         return data["data"]
 
-    def create_record(self, record):
+    def create_record(self, record, cloud=False):
         response = requests.post(
             API_URL.format(domain=record.domain),
             headers={"Authorization": f"Apikey {self.api_key}"},
@@ -46,7 +45,7 @@ class Arvan:
                 ],
                 "name": record.name,
                 "ttl": 120,
-                "cloud": False,
+                "cloud": cloud,
                 "upstream_https": "default",
                 "ip_filter_mode": {
                     "count": "single",
