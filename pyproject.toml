@@ -1,11 +1,14 @@
 [tool.poetry]
 name = "auto_ddns"
 version = "0.1.0"
-description = ""
+description = "A DDNS Python Library."
 authors = ["Ali Tavallaie <a.tavallaie@gmail.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
+PyYAML = "^6.0.1"
+requests = "^2.31.0"
+typer = "^0.9.0"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
