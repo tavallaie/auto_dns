@@ -2,9 +2,10 @@ import os
 import yaml
 import requests
 import typer
-from auto_dns.dns_providers.arvan import Arvan
-from auto_dns.dns_providers.cloudflare import Cloudflare
-from auto_dns.exceptions import UnsupportedProviderError
+from .dns_providers.arvan import Arvan
+from .dns_providers import Cloudflare
+from .exceptions import UnsupportedProviderError
+from tabulate import tabulate
 
 
 class DNSRecord:
@@ -18,17 +19,61 @@ class DDNS:
     def __init__(self, provider):
         self.provider = provider
 
-    def get_record(self, domain, record_type):
-        return self.provider.get_record(domain, record_type)
+    def get_record(self, domain, record_type=None, subdomain=None):
+        try:
+
+            records = self.provider.get_record(domain, record_type, subdomain)
+            if records is None:
+                print("No matching records found.")
+                return None
+
+            table = []
+            for item in records:
+                # Make sure 'value' key exists and it is a list
+                if "value" in item and isinstance(item["value"], list):
+                    for value in item["value"]:
+                        # Check if 'ip' key exists in the dictionary
+                        if "ip" in value:
+                            table.append(
+                                [
+                                    item.get("type", "N/A"),
+                                    item.get("name", "N/A"),
+                                    value["ip"],
+                                    item.get("ttl", "N/A"),
+                                    item.get("is_protected", "N/A"),
+                                ]
+                            )
+
+            print(
+                tabulate(
+                    table,
+                    headers=["Type", "Name", "IP", "TTL", "Is Protected"],
+                    tablefmt="pretty",
+                )
+            )
+            return records
+
+        except Exception as e:
+            print(f"Error getting records: {str(e)}")
+            return None
 
     def create_record(self, record):
-        self.provider.create_record(record)
+        try:
+            self.provider.create_record(record)
+        except Exception as e:
+            print(f"An exception occurred in DDNS create_record: {e}")
 
     def update_record(self, record):
-        self.provider.update_record(record)
+        try:
+            self.provider.update_record(record)
+        except Exception as e:
+            print(f"An exception occurred in DDNS update_record: {e}")
 
     def delete_record(self, record):
-        self.provider.delete_record(record)
+        try:
+            self.provider.delete_record(record)
+        except Exception as e:
+            print(f"An exception occurred in DDNS delete_record: {e}")
 
 
 DEFAULT_CONFIG_PATH = os.path.join(os.path.expanduser("~"), ".auto_ddns", "config.yaml")
@@ -51,6 +96,7 @@ def write_config(provider_name: str, api_key: str, config_file: str):
         with open(config_file, "r") as file:
             config = yaml.safe_load(file) or {}
     config[provider_name] = {"api_key": api_key}
+    os.makedirs(os.path.dirname(config_file), exist_ok=True)
     with open(config_file, "w") as file:
         yaml.dump(config, file)
 
@@ -60,6 +106,7 @@ def get_provider(provider_name: str, config_file: str):
         raise FileNotFoundError(f"Config file not found: {config_file}")
     with open(config_file) as file:
         config = yaml.safe_load(file)
+
     if provider_name == "arvan":
         return Arvan(config["arvan"]["api_key"])
     elif provider_name == "cloudflare":
@@ -80,12 +127,17 @@ def set_api_key(provider: str, api_key: str, config_file: str = DEFAULT_CONFIG_P
 
 
 @app.command()
+@app.command()
 def get(
-    domain: str, record_type: str, provider: str, config_file: str = DEFAULT_CONFIG_PATH
+    domain: str,
+    provider: str,
+    record_type: str = None,
+    subdomain: str = None,
+    config_file: str = DEFAULT_CONFIG_PATH,
 ):
     provider_instance = get_provider(provider, config_file)
     ddns = DDNS(provider_instance)
-    print(ddns.get_record(domain, record_type))
+    ddns.get_record(domain, record_type, subdomain)
 
 
 @app.command()
