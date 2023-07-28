@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "auto_dns"
-version = "0.1.0"
+version = "0.1.1"
 description = "A DNS Python Library."
 authors = ["Ali Tavallaie <a.tavallaie@gmail.com>"]
 readme = "README.rst"
