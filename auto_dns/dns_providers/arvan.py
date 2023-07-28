@@ -8,7 +8,7 @@ class Arvan:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def get_record(self, domain, record_type=None, subdomain=None):
+    def get_record(self, domain, record_type=None, name=None):
         response = requests.get(
             API_URL.format(domain=domain),
             headers={"Authorization": f"Apikey {self.api_key}"},
@@ -24,9 +24,9 @@ class Arvan:
             ]
 
         # if subdomain is provided, filter by name
-        if subdomain:
-            print(f"Searching for records with subdomain: {subdomain}")
-            data["data"] = [item for item in data["data"] if item["name"] == subdomain]
+        if name:
+            print(f"Searching for records with subdomain: {name}")
+            data["data"] = [item for item in data["data"] if item["name"] == name]
 
         # if no records found, return None
         if not data["data"]:
@@ -41,23 +41,43 @@ class Arvan:
             headers={"Authorization": f"Apikey {self.api_key}"},
             json={
                 "type": record.record_type,
-                "value": record.ip,
-                "name": "",
+                "value": [
+                    {"ip": record.ip, "port": None, "weight": None, "country": None}
+                ],
+                "name": record.name,
+                "ttl": 120,
+                "cloud": False,
+                "upstream_https": "default",
+                "ip_filter_mode": {
+                    "count": "single",
+                    "order": "none",
+                    "geo_filter": "none",
+                },
             },
         )
         response.raise_for_status()
         return response.json()
 
-    def update_record(self, record):
+    def update_record(self, record, name, cloud=False):
         existing_record = self.get_record(record.domain, record.record_type)
         if existing_record:
+            value = {"ip": record.ip, "port": None, "weight": None, "country": None}
+
             response = requests.put(
                 API_URL.format(domain=record.domain) + f"/{existing_record['id']}",
                 headers={"Authorization": f"Apikey {self.api_key}"},
                 json={
                     "type": record.record_type,
-                    "value": record.ip,
-                    "name": "",
+                    "value": [value],
+                    "name": name,
+                    "ttl": 120,
+                    "cloud": cloud,
+                    "upstream_https": "default",
+                    "ip_filter_mode": {
+                        "count": "single",
+                        "order": "none",
+                        "geo_filter": "none",
+                    },
                 },
             )
             response.raise_for_status()
@@ -65,12 +85,14 @@ class Arvan:
         return None
 
     def delete_record(self, record):
-        existing_record = self.get_record(record.domain, record.record_type)
-        if existing_record:
-            response = requests.delete(
-                API_URL.format(domain=record.domain) + f"/{existing_record['id']}",
-                headers={"Authorization": f"Apikey {self.api_key}"},
-            )
-            response.raise_for_status()
-            return response.json()
+        existing_records = self.get_record(
+            record.domain, record.record_type, record.name
+        )
+        if existing_records:
+            for existing_record in existing_records:
+                response = requests.delete(
+                    API_URL.format(domain=record.domain) + f"/{existing_record['id']}",
+                    headers={"Authorization": f"Apikey {self.api_key}"},
+                )
+                response.raise_for_status()
         return None

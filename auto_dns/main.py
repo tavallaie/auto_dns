@@ -9,10 +9,11 @@ from tabulate import tabulate
 
 
 class DNSRecord:
-    def __init__(self, domain, record_type, ip):
+    def __init__(self, domain, record_type, ip, name):
         self.domain = domain
         self.record_type = record_type
         self.ip = ip
+        self.name = name
 
 
 class DDNS:
@@ -127,23 +128,23 @@ def set_api_key(provider: str, api_key: str, config_file: str = DEFAULT_CONFIG_P
 
 
 @app.command()
-@app.command()
 def get(
     domain: str,
     provider: str,
     record_type: str = None,
-    subdomain: str = None,
+    name: str = None,
     config_file: str = DEFAULT_CONFIG_PATH,
 ):
     provider_instance = get_provider(provider, config_file)
     ddns = DDNS(provider_instance)
-    ddns.get_record(domain, record_type, subdomain)
+    ddns.get_record(domain, record_type, name)
 
 
 @app.command()
 def create(
     domain: str,
     record_type: str,
+    name: str,
     provider: str,
     ip: str = None,
     config_file: str = DEFAULT_CONFIG_PATH,
@@ -151,13 +152,14 @@ def create(
     provider_instance = get_provider(provider, config_file)
     ddns = DDNS(provider_instance)
     ip = ip or get_public_ip()
-    record = DNSRecord(domain, record_type, ip)
+    record = DNSRecord(domain, record_type, ip, name)
     ddns.create_record(record)
 
 
 @app.command()
 def update(
     domain: str,
+    name: str,
     record_type: str,
     provider: str,
     ip: str = None,
@@ -166,18 +168,22 @@ def update(
     provider_instance = get_provider(provider, config_file)
     ddns = DDNS(provider_instance)
     ip = ip or get_public_ip()
-    record = DNSRecord(domain, record_type, ip)
+    record = DNSRecord(domain, record_type, ip, name)
     ddns.update_record(record)
 
 
 @app.command()
 def delete(
-    domain: str, record_type: str, provider: str, config_file: str = DEFAULT_CONFIG_PATH
+    domain: str,
+    record_type: str,
+    name: str,
+    provider: str,
+    config_file: str = DEFAULT_CONFIG_PATH,
 ):
     provider_instance = get_provider(provider, config_file)
     ddns = DDNS(provider_instance)
     record = DNSRecord(
-        domain, record_type, "192.168.1.1"
+        domain, record_type, "192.168.1.1", name
     )  # placeholder IP for delete operation
     ddns.delete_record(record)
 
