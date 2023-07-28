@@ -1,12 +1,12 @@
 [tool.poetry]
-name = "auto_ddns"
+name = "auto_dns"
 version = "0.1.0"
-description = "A DDNS Python Library."
+description = "A DNS Python Library."
 authors = ["Ali Tavallaie <a.tavallaie@gmail.com>"]
 readme = "README.rst"
 
 [tool.poetry.scripts]
-AutoDDNS = "auto_ddns:app"
+autodns = "auto_dns:app"
 
 [tool.poetry.dependencies]
 python = "^3.10"
