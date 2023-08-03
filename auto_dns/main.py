@@ -22,56 +22,12 @@ class DDNS:
 
     def get_record(self, domain, record_type=None, subdomain=None):
         try:
-
             records = self.provider.get_record(domain, record_type, subdomain)
             if records is None:
                 print("No matching records found.")
                 return None
 
-            table = []
-            for item in records:
-                # Make sure 'value' key exists
-                if "value" in item:
-                    if isinstance(item["value"], list):
-                        # Handle case where 'value' is a list of dictionaries
-                        for value in item["value"]:
-                            table.append(
-                                [
-                                    item.get("type", "N/A"),
-                                    item.get("name", "N/A"),
-                                    value.get(
-                                        "ip", "N/A"
-                                    ),  # always get IP if it is available
-                                    item.get("ttl", "N/A"),
-                                    item.get("is_protected", "N/A"),
-                                ]
-                            )
-                    elif isinstance(item["value"], dict):
-                        # Handle case where 'value' is a dictionary
-                        table.append(
-                            [
-                                item.get("type", "N/A"),
-                                item.get("name", "N/A"),
-                                item["value"].get(
-                                    "host", "N/A"
-                                ),  # get host if it is available
-                                item.get("ttl", "N/A"),
-                                item.get("is_protected", "N/A"),
-                            ]
-                        )
-                    elif isinstance(item["value"], str):
-                        # Handle case where 'value' is a string (possible in case of TXT type)
-                        table.append(
-                            [
-                                item.get("type", "N/A"),
-                                item.get("name", "N/A"),
-                                item[
-                                    "value"
-                                ],  # directly take the value if it's a string
-                                item.get("ttl", "N/A"),
-                                item.get("is_protected", "N/A"),
-                            ]
-                        )
+            table = self.provider.transform_data_to_table(records)
 
             print(
                 tabulate(
@@ -81,10 +37,8 @@ class DDNS:
                 )
             )
             return records
-
         except Exception as e:
-            print(f"Error getting records: {str(e)}")
-            return None
+            print(f"Error getting record: {str(e)}")
 
     def create_record(self, record):
         try:

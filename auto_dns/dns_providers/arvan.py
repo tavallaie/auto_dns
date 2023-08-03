@@ -8,31 +8,65 @@ class Arvan:
     def __init__(self, api_key):
         self.api_key = api_key
 
-    def get_record(self, domain, record_type=None, name=None):
+    def get_record(self, domain, record_type=None, subdomain=None):
         response = requests.get(
             API_URL.format(domain=domain),
             headers={"Authorization": f"Apikey {self.api_key}"},
         )
         response.raise_for_status()
-        data = response.json()
-        # if record_type is provided, filter by type
+        records = response.json()["data"]
+
         if record_type:
             print(f"Searching for records of type: {record_type}")
-            data["data"] = [
-                item for item in data["data"] if item["type"] == record_type
-            ]
+            records = [item for item in records if item["type"] == record_type]
 
-        # if subdomain is provided, filter by name
-        if name:
-            print(f"Searching for records with subdomain: {name}")
-            data["data"] = [item for item in data["data"] if item["name"] == name]
+        if subdomain:
+            print(f"Searching for records with subdomain: {subdomain}")
+            records = [item for item in records if item["name"] == subdomain]
 
-        # if no records found, return None
-        if not data["data"]:
+        if not records:
             print("No matching records found.")
             return None
 
-        return data["data"]
+        return records
+
+    def transform_data_to_table(self, records):
+        table = []
+
+        for item in records:
+            if "value" in item:
+                if isinstance(item["value"], list):
+                    for value in item["value"]:
+                        table.append(
+                            [
+                                item.get("type", "N/A"),
+                                item.get("name", "N/A"),
+                                value.get("ip", "N/A"),
+                                item.get("ttl", "N/A"),
+                                item.get("is_protected", "N/A"),
+                            ]
+                        )
+                elif isinstance(item["value"], dict):
+                    table.append(
+                        [
+                            item.get("type", "N/A"),
+                            item.get("name", "N/A"),
+                            item["value"].get("host", "N/A"),
+                            item.get("ttl", "N/A"),
+                            item.get("is_protected", "N/A"),
+                        ]
+                    )
+                elif isinstance(item["value"], str):
+                    table.append(
+                        [
+                            item.get("type", "N/A"),
+                            item.get("name", "N/A"),
+                            item["value"],
+                            item.get("ttl", "N/A"),
+                            item.get("is_protected", "N/A"),
+                        ]
+                    )
+        return table
 
     def create_record(self, record, cloud=False):
         response = requests.post(
